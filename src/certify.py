@@ -19,6 +19,7 @@ def process(model_to_certify, processor, dimension, dataset, threshold=0.8, part
     
     ## Process image
     raw_image = dataset["train"]["image"][index]
+    # raw_image = dataset["train"]["image"][len(dataset["train"]["labels"]) - index - 1]
     image = np.array(raw_image)
     inputs_tensor = processor(images=image, return_tensors="pt")
     inputs_np = processor(images=image, return_tensors="np")
@@ -26,18 +27,20 @@ def process(model_to_certify, processor, dimension, dataset, threshold=0.8, part
     ## Get predictions
     predicted_label = get_top_categories(model=model_to_certify, img_tensor=inputs_tensor.pixel_values[0])[0]
     true_label = dataset["train"]["labels"][index]
+    # true_label = dataset["train"]["labels"][len(dataset["train"]["labels"]) - index - 1]
     print('True label: ', true_label, ', Predicted: ', predicted_label)
     
     ## Get mask & saliency map only if prediction is correct
     if (true_label == predicted_label):
       resized_image = cv2.resize(np.array(image), (dimension, dimension))
 
-      mask = get_mask(resized_image)
-      Image.fromarray(mask).save(f'output/{index}_mask.jpg')
+      mask = get_mask(resized_image, predicted_label)
+      Image.fromarray(mask).save(f'output2/reverse{index}_mask.jpg')
       
       map = get_map(model=model_to_certify, predicted_labels=[predicted_label], inputs_tensor=inputs_tensor, image_resized=resized_image)
       grayscale = np.uint8(map[0][0] * 255)
-      Image.fromarray(grayscale).save(f'output/{index}_map.jpg')
+      Image.fromarray(grayscale).save(f'output2/reverse{index}_map.jpg')
+      Image.fromarray(map[1][0]).save(f'output2/reverse{index}_mapcolor.jpg')
       
       ## Element-wise multiplication of mask and map
       ints = np.multiply(mask/255, grayscale*100/255)
@@ -73,7 +76,7 @@ def get_args():
   """
   the main function of the script
 
-  example: python certify.py --model google/vit-base-patch32-384 --dimension 384 --dataset cats_vs_dogs --threshold 0.8 --partial 4
+  example: python certify.py --model akahana/vit-base-cats-vs-dogs --dimension 384 --dataset cats_vs_dogs --threshold 0.8 --partial 4
   """
 if __name__ == "__main__":
   # model_to_certify = ViTForImageClassification.from_pretrained('google/vit-base-patch32-384')

@@ -22,9 +22,12 @@ sem_classes = [
   'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'
 ]
 sem_class_to_idx = {cls: idx for (idx, cls) in enumerate(sem_classes)}
-desired_category = sem_class_to_idx["cat"]
 
-def get_mask(image):
+
+def get_mask(image, category):
+  desired_category = sem_class_to_idx["dog"]
+  if category == 0:
+    desired_category =  sem_class_to_idx["cat"]
   rgb_img = np.float32(image) / 255
   image_tensor = preprocess_image(rgb_img,
                                   mean=[0.485, 0.456, 0.406],
